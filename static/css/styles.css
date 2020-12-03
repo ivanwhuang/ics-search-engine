@@ -1,0 +1,41 @@
+h1, h2, h3, h4, p{
+	color: white;
+}
+
+.content-background{
+	background: #4b545c;
+	height: 100vh;
+	overflow: scroll;
+}
+
+.content-layout{
+	padding-top: 10vh;
+}
+
+#search-form{
+	margin: 5vh 5vw;
+}
+
+#results-list{
+	margin-bottom: 5vh;
+}
+
+.list-group-item{
+	overflow-wrap: break-word;
+}
+
+.response-time-section{
+	padding-top: 2vh;
+	text-align: center;
+}
+
+#response-time{
+	font-size: 4rem;
+}
+
+@media (min-width: 768px){
+	.response-time-section{
+		padding-top: 10vh;
+	}
+
+}

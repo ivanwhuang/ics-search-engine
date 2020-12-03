@@ -1,0 +1,9 @@
+# inverted index files 
+index_dumps
+
+# document json data
+ics_docs
+
+# misc
+env
+__pycache__
