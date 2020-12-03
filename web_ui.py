@@ -27,6 +27,7 @@ def retrieve_docs(query):
 	start_time = time.time()
 	_ , tokens = extract_tokens(query)
 	results = engine.retrieve_docs(tokens.keys())
+	# results = engine.retrieve_docs_slow(tokens.keys())
 	end_time = time.time()
 	response_time = int((end_time - start_time) * 1000)
 	print("Query Response Time: ", response_time, "ms\n")
@@ -36,9 +37,6 @@ def retrieve_docs(query):
 	else:
 		res = make_response(jsonify({"results": [], "responseTime": response_time}), 200)
 		return res 
-
-	# return render_template('index.html', )	
-
 
 if __name__ == '__main__':
 	engine = SearchEngine()

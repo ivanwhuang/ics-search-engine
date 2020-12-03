@@ -2,8 +2,6 @@ import os
 import glob
 from collections import deque
 from inverted_index import InvertedIndex
-from index_parser import build_record  # Delete later 
-from posting import Posting # delete later?? 
 
 try:
 	import cPickle as pickle
@@ -46,6 +44,7 @@ def main():
 
 	index.print_report()
 	index.dump_url_map(base_dump_path + 'url_map.pkl')
+	index.dump_vector_lens(base_dump_path + 'vector_lens.pkl')
 
 	while len(dump_file_paths) > 1:
 		dump1 = dump_file_paths.popleft()
@@ -63,12 +62,6 @@ def main():
 	index.store_idf(base_dump_path + 'final_index.txt', base_dump_path + 'idf.pkl')		
 
 	index.dump_term_offsets(base_dump_path + 'final_index.txt', base_dump_path + 'term_offsets.pkl')
-
-
-def read_idf_file(idf_file):
-	with open(idf_file, 'rb') as idf_f:
-		idf = pickle.load(idf_f)
-		print(idf)
 
 def test_build_index():
 	index = InvertedIndex()
@@ -106,10 +99,8 @@ def test_build_index():
 		batch_num += 1
 
 	index.print_report()	
-	
 	index.dump_url_map(test_dump_path + 'url_map.pkl')
-
-	print(dump_file_paths)
+	index.dump_vector_lens(test_dump_path + 'vector_lens.pkl')
 
 	while len(dump_file_paths) > 1:
 		dump1 = dump_file_paths.popleft()
@@ -130,13 +121,4 @@ def test_build_index():
 
 
 if __name__ == "__main__":
-	# main()
-	# test_build_index()
-	# read_idf_file(test_dump_path + 'idf.pkl')
-
-	# with open(base_dump_path + 'final_index.txt', 'r') as f:
-	# 	f.seek(119153904)
-	# 	line = f.readline()
-	# 	t, postings = build_record(line)
-	# 	print(t)
-	# 	print(postings)
+	main()

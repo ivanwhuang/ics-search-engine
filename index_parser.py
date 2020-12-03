@@ -14,6 +14,11 @@ def build_record(line):
 		posting_list.append(Posting(int(doc_id), int(freq), int(total_tokens), float(tf)))	
 	return (token, posting_list)
 
+def get_record_term(line):
+	line = line.rstrip('\n').split('=')
+	token = line[0]
+	return token
+
 def stringify_record(token, postings):
 	record_str = token + '='
 

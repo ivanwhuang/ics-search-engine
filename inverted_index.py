@@ -14,19 +14,17 @@ from bs4 import BeautifulSoup
 from posting import Posting
 from index_parser import build_record, stringify_record, parse_url, extract_tokens
 
-# Capitalize this later
-base_dump_path = 'index_dumps/'
-
 class NoHtml(Exception):
 	pass
 
 class InvertedIndex():
 	def __init__(self):
+		self.index = defaultdict(list)
+		self.id_count = 0		
 		self.url_map = dict()
+		self.vector_lens = dict()
 		self.unique_urls = set()
 		self.unique_tokens = set()
-		self.index = defaultdict(list)
-		self.id_count = 0
 		self.num_seen_before = 0
 		self.num_non_HTML = 0
 		self.mergeNum = 0 		
@@ -98,25 +96,6 @@ class InvertedIndex():
 		f1.close()
 		f2.close()
 
-	# def write_tfidf(self, index_file, final_index_file, n_docs):
-	# 	final_f = open(final_index_file, 'w')
-	# 	index_f = open(index_file, 'r')
-
-	# 	line = index_f.readline()
-	# 	while line and len(line) > 0:
-	# 		t, postings = build_record(line)
-	# 		idf = math.log(n_docs / len(postings))
-	# 		for posting in postings:
-	# 			tf = posting.frequency / posting.total_tokens
-	# 			posting.tfidf = tf * idf
-			
-	# 		new_record = stringify_record(t, postings) 
-	# 		final_f.write(new_record)
-	# 		line = index_f.readline()
-
-	# 	index_f.close()
-	# 	final_f.close()
-
 	def store_idf(self, index_file, idf_file):
 		idf_dict = dict()
 
@@ -162,10 +141,17 @@ class InvertedIndex():
 			if soup.find('html') == None:
 				raise NoHtml	
 			
-			total_tokens, tokens = extract_tokens(soup.get_text(' '))		
+			total_tokens, tokens = extract_tokens(soup.get_text(' '))	
+
+			vector_len = 0	
 
 			for token, freq in tokens.items():
-				self.index[token].append(Posting(self.id_count, freq, total_tokens))			
+				tf = 1 + math.log(freq)
+				self.index[token].append(Posting(self.id_count, freq, total_tokens, tf))
+				vector_len += pow(tf, 2)	
+			vector_len = math.sqrt(vector_len)
+			self.vector_lens[self.id_count] = vector_len
+
 		except NoHtml:
 			# Skip this file due to no html content
 			self.num_non_HTML += 1
@@ -188,6 +174,10 @@ class InvertedIndex():
 	def dump_url_map(self, dump_file):
 		with open(dump_file, 'wb') as f:
 			pickle.dump(self.url_map, f)
+
+	def dump_vector_lens(self, dump_file):
+		with open(dump_file, 'wb') as f:
+			pickle.dump(self.vector_lens, f)
 
 	def dump_term_offsets(self, index_file, dump_file):
 		offset_dict = dict()
