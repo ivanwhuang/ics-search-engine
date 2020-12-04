@@ -59,7 +59,7 @@ class SearchEngine():
 
 			for posting in posting_list:
 				# don't consider postings with less than 100 tokens in the top-k
-				if posting.total_tokens <= 100:
+				if posting.total_tokens <= 250:
 					continue 
 				
 				# Calculate the current ltc.lnc value of the current query term and add it to document score 
@@ -107,6 +107,9 @@ class SearchEngine():
 					for posting in posting_list:
 						# Calculate tf-idf weighting for current query term and document 
 						scores[posting.doc_id] += self.idf_dict[term] * posting.tf	
+					tokens.remove(term)
+			if len(tokens) == 0:
+				break
 			line = self.index_f.readline()
 
 		top_k = sorted(scores.keys(), key=lambda doc_id: scores[doc_id], reverse=True)[:10]	

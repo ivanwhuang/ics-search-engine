@@ -31,6 +31,11 @@ class InvertedIndex():
 		self.mergeNum = 0 		
 
 	def build_full_index(self, documents, batch_size, dump_path): 
+		'''
+		Given a list of documents and a batch size, create partial indexes that have 
+		a maximum capacity of the specified batch size. Then sequentially merge these 
+		partial indexes in order to build the full inverted index. 
+		'''
 		if len(documents) == 0:
 			print("No documents found to index")
 			return			
@@ -46,6 +51,7 @@ class InvertedIndex():
 				batch.append(documents.pop())
 			
 			dump_file = dump_path + 'dump' + str(batch_num) + '.txt'
+			# Build a partial index for each batch 
 			self.build_partial_index(batch, dump_file)
 			dump_file_paths.append(dump_file)
 
@@ -53,6 +59,7 @@ class InvertedIndex():
 
 		self.print_report()
 
+		# Merge in the order of merging smaller index files first. 
 		while len(dump_file_paths) > 1:
 			dump1 = dump_file_paths.popleft()
 			dump2 = dump_file_paths.popleft()
@@ -63,15 +70,19 @@ class InvertedIndex():
 
 			merge_num += 1
 
+		# Rename the final merged file 
 		index_path = dump_file_paths.pop()
 		os.rename(index_path, dump_path + 'final_index.txt')
 
+		# Dump all info that is necessary for scoring and retrieval 
 		self._dump_idf(dump_path + 'final_index.txt', dump_path + 'idf.pkl')	
 		self._dump_term_offsets(dump_path + 'final_index.txt', dump_path + 'term_offsets.pkl')
 		self._dump_url_map(dump_path + 'url_map.pkl')
 		self._dump_vector_lens(dump_path + 'vector_lens.pkl')
 
 	def merge_indexes(self, dump_file1, dump_file2, merge_file):
+		'''Merge two inverted index files'''
+
 		f1 = open(dump_file1, 'r')
 		f2 = open(dump_file2, 'r')
  
@@ -129,8 +140,8 @@ class InvertedIndex():
 		os.remove(dump_file1)
 		os.remove(dump_file2)
 
-	# Given a batch of documents, build a partial index
 	def build_partial_index(self, documents, dump_file):
+		'''Given a batch of documents, build a partial index'''
 		for doc_file in documents:
 			with open(doc_file) as doc:
 				doc_data = json.load(doc)
@@ -139,16 +150,22 @@ class InvertedIndex():
 		self._sort_and_dump(dump_file)
 		self.index.clear()	
 
-	# Print statistics of Inverted Index
+	
 	def print_report(self):
+		'''Print statistics of Inverted Index'''
 		print("------ Index Report -------")
 		print("Number of documents indexed: " + str(self.id_count))
 		print("Number of unique tokens: " + str(len(self.unique_tokens)))
 		print("Number of Non-HTML Files: " + str(self.num_non_HTML))
 		print("Number of urls already indexed: " + str(self.num_seen_before) + "\n")				
+ 
+	def _add_to_index(self, document: 'Dictionary decoded from JSON'):	
+		'''
+		For given document, create a posting for each unique term in the document and 
+		append it to its respective posting list 
 
-	# Index a document 
-	def _add_to_index(self, document: 'Dictionary decoded from JSON'):		
+		'''
+
 		parsed_url = parse_url(document["url"])
 		print("Indexing Doc " + str(self.id_count) + ": " + parsed_url)
 
@@ -181,8 +198,8 @@ class InvertedIndex():
 		self.unique_urls.add(parsed_url)
 		self.id_count += 1
 
-	# Sorts the partial inverted index and dump the content into specified dump file
 	def _sort_and_dump(self, dump_file):
+		'''Sort the partial inverted index and dump the content into specified dump file'''
 		with open(dump_file, 'w') as f:
 			for term in sorted(self.index.keys()):
 				record = stringify_record(term, self.index[term])
@@ -190,6 +207,7 @@ class InvertedIndex():
 				del self.index[term]				
 
 	def _dump_idf(self, index_file, dump_file):
+		'''Dump hashmap of the IDF values corresponding to each term'''
 		idf_dict = dict()
 
 		with open(index_file, 'r') as index_f:
@@ -205,18 +223,19 @@ class InvertedIndex():
 		with open(dump_file, 'wb') as f:
 			pickle.dump(idf_dict, f)				
 
-	# Store hashmap of doc_ids to urls 
 	def _dump_url_map(self, dump_file):
+		'''Dump hashmap of the urls corresponding to each document'''
 		with open(dump_file, 'wb') as f:
 			pickle.dump(self.url_map, f)
 
 	def _dump_vector_lens(self, dump_file):
+		'''Dump hashmap of vector lengths of each document'''
 		with open(dump_file, 'wb') as f:
 			pickle.dump(self.vector_lens, f)
 
 	def _dump_term_offsets(self, index_file, dump_file):
+		'''Dump hashmap of term offsets for each term in the index file'''
 		offset_dict = dict()
-
 		offset = 0 
 		with open (index_file, 'r') as index_f:
 			line = index_f.readline()

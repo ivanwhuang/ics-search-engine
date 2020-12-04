@@ -1,5 +1,6 @@
 # inverted index files 
 index_dumps
+test_dumps
 
 # document json data
 ics_docs

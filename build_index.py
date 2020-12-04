@@ -6,6 +6,7 @@ base_dump_path = 'index_dumps/'
 test_dump_path = 'test_dumps/'
 
 def build_ics_index():
+	'''Build an inverted index for the entire set of ICS documents'''
 	index = InvertedIndex()
 	batch_size = 15000
 	docs = []
@@ -16,6 +17,7 @@ def build_ics_index():
 	index.build_full_index(docs, batch_size, base_dump_path)
 	
 def build_test_index():
+	'''Build an inverted index for a small set of ICS documents for testing/debugging purposes'''
 	index = InvertedIndex()
 	batch_size = 7
 	docs = []
@@ -34,7 +36,6 @@ def build_test_index():
 
 if __name__ == "__main__":
 	build_ics_index()
-
 	# build_test_index()
 
 
