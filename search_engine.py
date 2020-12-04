@@ -12,6 +12,7 @@ except:
 import math
 
 base_path = 'index_dumps/'
+# base_path = 'test_dumps/'
 
 index_file =  base_path + 'final_index.txt'
 url_map_file =  base_path + 'url_map.pkl'
@@ -31,11 +32,11 @@ class SearchEngine():
 		with open(vector_lens_file, 'rb') as lens_f:
 			self.vector_lens = pickle.load(lens_f)
 
-	'''
-	Utilize seek() operations to directly jump to the positions of all the query terms directly. 
-	Documents are scored and ranked via lnc.ltc vector space scoring method. 
-	'''
 	def retrieve_docs(self, tokens: ['tokens']):
+		'''
+		Utilize seek() operations to directly jump to the positions of all the query terms directly. 
+		Documents are scored and ranked via lnc.ltc vector space scoring method. 
+		'''		
 		token_count = defaultdict(int)
 
 		for token in tokens:
@@ -46,7 +47,7 @@ class SearchEngine():
 
 		for token, q_freq in token_count.items():
 			if token not in self.offsets:
-					continue
+				continue
 			# calculate tfidf (ltc) of the query term for query vector
 			q_tf = 1 + math.log(q_freq)
 			q_tfidf[token] = q_tf * self.idf_dict[token] 
@@ -88,11 +89,12 @@ class SearchEngine():
 
 		return results
 
-	''' 
-	Scans through the entire index file for the desired posting lists. 
-	Documents are scored and via a tf-idf weight for each term.  
-	'''
+
 	def retrieve_docs_slow(self, tokens: ['tokens']):
+		''' 
+		Scans through the entire index file for the desired posting lists. 
+		Documents are scored and via a tf-idf weight for each term.  
+		'''		
 		tokens = set(tokens)
 
 		scores = defaultdict(int)		

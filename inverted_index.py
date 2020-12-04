@@ -1,8 +1,9 @@
 # Inverted Index 
-from collections import defaultdict, OrderedDict
+from collections import defaultdict, deque
 import re
 import json 
 import math
+import os 
 
 # cPickle is the C implementation of pickle. It runs faster than normal pickle module
 try:
@@ -29,16 +30,46 @@ class InvertedIndex():
 		self.num_non_HTML = 0
 		self.mergeNum = 0 		
 
-	# Given a batch of documents, build a partial index
-	def build_partial_index(self, documents, dump_file):
-		for doc_file in documents:
-			with open(doc_file) as doc:
-				doc_data = json.load(doc)
-				self._add_to_index(doc_data)
+	def build_full_index(self, documents, batch_size, dump_path): 
+		if len(documents) == 0:
+			print("No documents found to index")
+			return			
 
-		self._sort_and_dump(dump_file)
+		batch_num = 0
+		merge_num = 0
+		dump_file_paths = deque()
 
-		self.index.clear()	
+		while len(documents) > 0:
+			batch = []
+			# Get Batch
+			for i in range(min(batch_size, len(documents))):
+				batch.append(documents.pop())
+			
+			dump_file = dump_path + 'dump' + str(batch_num) + '.txt'
+			self.build_partial_index(batch, dump_file)
+			dump_file_paths.append(dump_file)
+
+			batch_num += 1
+
+		self.print_report()
+
+		while len(dump_file_paths) > 1:
+			dump1 = dump_file_paths.popleft()
+			dump2 = dump_file_paths.popleft()
+			merge_file = dump_path + 'merge' + str(merge_num) + '.txt'
+
+			self.merge_indexes(dump1, dump2, merge_file)
+			dump_file_paths.appendleft(merge_file)	
+
+			merge_num += 1
+
+		index_path = dump_file_paths.pop()
+		os.rename(index_path, dump_path + 'final_index.txt')
+
+		self._dump_idf(dump_path + 'final_index.txt', dump_path + 'idf.pkl')	
+		self._dump_term_offsets(dump_path + 'final_index.txt', dump_path + 'term_offsets.pkl')
+		self._dump_url_map(dump_path + 'url_map.pkl')
+		self._dump_vector_lens(dump_path + 'vector_lens.pkl')
 
 	def merge_indexes(self, dump_file1, dump_file2, merge_file):
 		f1 = open(dump_file1, 'r')
@@ -95,35 +126,26 @@ class InvertedIndex():
 						
 		f1.close()
 		f2.close()
+		os.remove(dump_file1)
+		os.remove(dump_file2)
 
-	def store_idf(self, index_file, idf_file):
-		idf_dict = dict()
+	# Given a batch of documents, build a partial index
+	def build_partial_index(self, documents, dump_file):
+		for doc_file in documents:
+			with open(doc_file) as doc:
+				doc_data = json.load(doc)
+				self._add_to_index(doc_data)
 
-		with open(index_file, 'r') as index_f:
-			line = index_f.readline()
+		self._sort_and_dump(dump_file)
+		self.index.clear()	
 
-			while line and len(line) > 0:
-				t, postings = build_record(line)
-				idf = math.log(self.id_count / len(postings))
-				idf_dict[t] = idf 
-
-				line = index_f.readline()
-
-		with open(idf_file, 'wb') as idf_f:
-			pickle.dump(idf_dict, idf_f)
-
-	def print_index(self):
-		for term, postings in self.index.items():
-			print(" ---- TERM: " + term + " ----")
-			for posting in postings:
-				print(posting.doc_id, self.url_map[posting.doc_id], posting.frequency)
-
+	# Print statistics of Inverted Index
 	def print_report(self):
 		print("------ Index Report -------")
 		print("Number of documents indexed: " + str(self.id_count))
 		print("Number of unique tokens: " + str(len(self.unique_tokens)))
 		print("Number of Non-HTML Files: " + str(self.num_non_HTML))
-		print("Number of urls already indexed: " + str(self.num_seen_before))
+		print("Number of urls already indexed: " + str(self.num_seen_before) + "\n")				
 
 	# Index a document 
 	def _add_to_index(self, document: 'Dictionary decoded from JSON'):		
@@ -137,12 +159,10 @@ class InvertedIndex():
 
 		try: 
 			soup = BeautifulSoup(document['content'], 'html.parser')
-
 			if soup.find('html') == None:
 				raise NoHtml	
 			
 			total_tokens, tokens = extract_tokens(soup.get_text(' '))	
-
 			vector_len = 0	
 
 			for token, freq in tokens.items():
@@ -159,27 +179,42 @@ class InvertedIndex():
 
 		self.url_map[self.id_count] = parsed_url	
 		self.unique_urls.add(parsed_url)
-	
 		self.id_count += 1
 
-	# Sorts the inverted index and dumps the content into specified dump file
+	# Sorts the partial inverted index and dump the content into specified dump file
 	def _sort_and_dump(self, dump_file):
 		with open(dump_file, 'w') as f:
 			for term in sorted(self.index.keys()):
 				record = stringify_record(term, self.index[term])
 				f.write(record)
-				del self.index[term]	
+				del self.index[term]				
+
+	def _dump_idf(self, index_file, dump_file):
+		idf_dict = dict()
+
+		with open(index_file, 'r') as index_f:
+			line = index_f.readline()
+
+			while line and len(line) > 0:
+				t, postings = build_record(line)
+				idf = math.log(self.id_count / len(postings))
+				idf_dict[t] = idf 
+
+				line = index_f.readline()
+
+		with open(dump_file, 'wb') as f:
+			pickle.dump(idf_dict, f)				
 
 	# Store hashmap of doc_ids to urls 
-	def dump_url_map(self, dump_file):
+	def _dump_url_map(self, dump_file):
 		with open(dump_file, 'wb') as f:
 			pickle.dump(self.url_map, f)
 
-	def dump_vector_lens(self, dump_file):
+	def _dump_vector_lens(self, dump_file):
 		with open(dump_file, 'wb') as f:
 			pickle.dump(self.vector_lens, f)
 
-	def dump_term_offsets(self, index_file, dump_file):
+	def _dump_term_offsets(self, index_file, dump_file):
 		offset_dict = dict()
 
 		offset = 0 
@@ -192,9 +227,7 @@ class InvertedIndex():
 				line = index_f.readline()
 
 		with open (dump_file, 'wb') as f:
-			pickle.dump(offset_dict, f)
-
-
+			pickle.dump(offset_dict, f)		
 
 
 

@@ -37,7 +37,6 @@ def stringify_record(token, postings):
 def parse_url(url):
 	return url.split('?')[0].split('#')[0].rstrip('/ ')	
 
-
 def extract_tokens(s):
 	tokenizer = RegexpTokenizer(r'[a-zA-Z0-9]+')
 	ps = PorterStemmer()
