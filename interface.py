@@ -26,12 +26,13 @@ class Interface():
 				# results = self.engine.retrieve_docs_slow(tokens.keys())
 				end_time = time.time()
 				response_time = (end_time - start_time) * 1000
-				print("Query Response Time: ", response_time, "ms\n")
+				print("Results:")
 				if results:
 					for i, result in enumerate(results, 1):
 						print(i, result)
 				else:
 					print("No results")
+				print("Query Response Time: ", f'{response_time:.3f}', "ms")
 			else:
 				print("Please specify a valid option.")
 

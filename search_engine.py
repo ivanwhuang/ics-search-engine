@@ -82,8 +82,8 @@ class SearchEngine():
 
 		top_k = sorted(scores.keys(), key=lambda doc_id: scores[doc_id], reverse=True)[:10]	
 		
-		for doc_id in top_k:
-			print(self.url_map[doc_id], scores[doc_id])  # print doc scores in terminal 
+		# for doc_id in top_k:
+		# 	print(self.url_map[doc_id], scores[doc_id])  # print doc scores in terminal 
 
 		results = [self.url_map[doc_id] for doc_id in top_k]
 
@@ -114,8 +114,8 @@ class SearchEngine():
 
 		top_k = sorted(scores.keys(), key=lambda doc_id: scores[doc_id], reverse=True)[:10]	
 		
-		for doc_id in top_k:
-			print(self.url_map[doc_id], scores[doc_id])  # print doc scores in terminal 
+		# for doc_id in top_k:
+		# 	print(self.url_map[doc_id], scores[doc_id])  # print doc scores in terminal 
 
 		results = [self.url_map[doc_id] for doc_id in top_k]
 		self.index_f.seek(0)
