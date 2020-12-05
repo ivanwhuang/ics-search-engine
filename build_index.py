@@ -2,8 +2,8 @@ import glob
 from inverted_index import InvertedIndex
 
 base_doc_path = 'ics_docs/'
-base_dump_path = 'index_dumps/'
-test_dump_path = 'test_dumps/'
+base_dump_path = 'dumps/index_dumps/'
+test_dump_path = 'dumps/test_dumps/'
 
 def build_ics_index():
 	'''Build an inverted index for the entire set of ICS documents'''
@@ -35,7 +35,7 @@ def build_test_index():
 
 
 if __name__ == "__main__":
-	build_ics_index()
-	# build_test_index()
+	# build_ics_index()
+	build_test_index()
 
 

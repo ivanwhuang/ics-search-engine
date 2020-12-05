@@ -22,8 +22,8 @@ class Interface():
 				query = input("Enter a search query: ")
 				start_time = time.time()
 				_ , tokens = extract_tokens(query)
-				# results = self.engine.retrieve_docs(tokens.keys())
-				results = self.engine.retrieve_docs_slow(tokens.keys())
+				results = self.engine.retrieve_docs(tokens.keys())
+				# results = self.engine.retrieve_docs_slow(tokens.keys())
 				end_time = time.time()
 				response_time = (end_time - start_time) * 1000
 				print("Query Response Time: ", response_time, "ms\n")

@@ -11,8 +11,8 @@ except:
 
 import math
 
-base_path = 'index_dumps/'
-# base_path = 'test_dumps/'
+base_path = 'dumps/index_dumps/'
+# base_path = 'dumps/test_dumps/'
 
 index_file =  base_path + 'final_index.txt'
 url_map_file =  base_path + 'url_map.pkl'
